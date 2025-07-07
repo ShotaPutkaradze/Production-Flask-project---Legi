@@ -1,0 +1,20 @@
+2025-07-07 15:52:29.952070: wfastcgi.py will restart when files in C:\inetpub\wwwroot\production\ are changed: .*((\.py)|(\.config))$
+2025-07-07 15:52:29.953481: wfastcgi.py 3.0.0 initialized
+2025-07-07 15:58:53.113436: Unhandled exception in wfastcgi.py: Traceback (most recent call last):
+  File "C:\inetpub\wwwroot\production\.venv\lib\site-packages\wfastcgi.py", line 774, in main
+    record = read_fastcgi_record(fcgi_stream)
+  File "C:\inetpub\wwwroot\production\.venv\lib\site-packages\wfastcgi.py", line 158, in read_fastcgi_record
+    data = stream.read(8)     # read record
+OSError: [Errno 22] Invalid argument
+2025-07-07 15:58:53.114493: Running on_exit tasks
+2025-07-07 15:58:53.115148: wfastcgi.py 3.0.0 closed
+2025-07-07 16:05:55.838023: wfastcgi.py will restart when files in C:\inetpub\wwwroot\production\ are changed: .*((\.py)|(\.config))$
+2025-07-07 16:05:55.839483: wfastcgi.py 3.0.0 initialized
+2025-07-07 16:27:05.684811: wfastcgi.py will restart when files in C:\inetpub\wwwroot\production\ are changed: .*((\.py)|(\.config))$
+2025-07-07 16:27:05.686213: wfastcgi.py 3.0.0 initialized
+2025-07-07 16:35:02.275103: wfastcgi.py will restart when files in C:\inetpub\wwwroot\production\ are changed: .*((\.py)|(\.config))$
+2025-07-07 16:35:02.276482: wfastcgi.py 3.0.0 initialized
+2025-07-07 16:48:38.604271: wfastcgi.py will restart when files in C:\inetpub\wwwroot\production\ are changed: .*((\.py)|(\.config))$
+2025-07-07 16:48:38.605539: wfastcgi.py 3.0.0 initialized
+2025-07-07 17:05:01.468398: wfastcgi.py will restart when files in C:\inetpub\wwwroot\production\ are changed: .*((\.py)|(\.config))$
+2025-07-07 17:05:01.469822: wfastcgi.py 3.0.0 initialized
