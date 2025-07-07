@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ისტორია (ადმინი) / История (Админ)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 50px 20px 20px;
+        box-sizing: border-box;
+      }
+
+      .header-controls {
+        width: 100%;
+        max-width: 1850px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .logout-link {
+        text-decoration: none;
+        color: #d32f2f;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .greeting {
+        color: #333;
+        font-size: 16px;
+        text-align: center;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      #searchInput {
+        padding: 10px;
+        font-size: 16px;
+        width: 100%;
+        max-width: 400px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .export-btn,
+      .report-btn {
+        background-color: #2980b9;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      .export-btn:hover,
+      .report-btn:hover {
+        background-color: #1f6391;
+      }
+
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+        max-width: 1850px;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 1800px;
+        font-size: 14px;
+      }
+
+      table th,
+      table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        vertical-align: middle;
+        text-align: left;
+      }
+
+      table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      table tbody tr:hover:not(.edited-row):not(.deleted-row) {
+        background-color: #f3faff;
+      }
+
+      .deleted-row td {
+        color: #999;
+        text-decoration: line-through;
+        background-color: #f8f8f8;
+      }
+
+      .edited-row {
+        background-color: #fff6cc;
+      }
+
+      .delete-info {
+        color: red;
+        font-weight: bold;
+        cursor: help;
+      }
+
+      .delete-reason {
+        font-size: 12px;
+        color: #a94442;
+        font-style: italic;
+        margin-bottom: 4px;
+      }
+
+      .delete-comment-block {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .action-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      .edit-button,
+      .toggle-edit-btn {
+        background: #ccc;
+        border: none;
+        padding: 6px 10px;
+        font-size: 18px;
+        border-radius: 4px;
+        cursor: pointer;
+        line-height: 1;
+        text-decoration: none;
+        color: black;
+      }
+
+      .edit-button:hover,
+      .toggle-edit-btn:hover {
+        background: #bbb;
+      }
+
+      .toggle-edit-btn.has-edits {
+        font-weight: bold;
+        background-color: #ffeb99;
+      }
+
+      .edit-log ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #333;
+        font-size: 13px;
+      }
+
+      .edit-log li {
+        margin-bottom: 5px;
+      }
+
+      .pagination {
+        margin-top: 30px;
+        text-align: center;
+      }
+
+      .pagination a {
+        margin: 0 5px;
+        text-decoration: none;
+        color: #2980b9;
+      }
+
+      .pagination a.current {
+        font-weight: bold;
+        color: #d32f2f;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 20px 10px;
+        }
+        table {
+          font-size: 12px;
+        }
+        table th,
+        table td {
+          padding: 6px 4px;
+        }
+        #searchInput,
+        .export-btn {
+          width: 100%;
+          max-width: none;
+        }
+        .greeting,
+        h1 {
+          text-align: center;
+        }
+        .toggle-edit-btn,
+        .edit-button {
+          font-size: 16px;
+          padding: 4px 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header-controls">
+      <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+      <p class="greeting">გამარჯობა admin 🙂 / Здравствуйте admin 🙂</p>
+      <h1>ჩანაწერების ისტორია / История записей</h1>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="🔍 ძიება... / 🔍 Поиск..."
+      />
+      <div class="button-group">
+        <a href="{{ url_for('report') }}" class="report-btn">რეპორტი / Отчет</a>
+        <form
+          method="GET"
+          action="{{ url_for('export_admin_csv') }}"
+          style="margin: 0"
+        >
+          <button class="export-btn" type="submit">
+            📄 CSV ექსპორტი / Экспорт в CSV
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>რაოდენობა<br />Количество</th>
+            <th>მზა (პადონი/რიგი)<br />Готовая (Пад/Ряд)</th>
+            <th>წუნი (პადონი/რიგი)<br />Брак (Пад/Ряд)</th>
+            <th>ჩამოფასებული (პადონი/რიგი)<br />Уцененная (Пад/Ряд)</th>
+            <th>დასახელება<br />Наименование</th>
+            <th>არტიკული<br />Артикул</th>
+            <th>ჯგუფი<br />Группа</th>
+            <th>კატეგორია<br />Категория</th>
+            <th>მხარე<br />Сторона</th>
+            <th>ოპერატორი<br />Оператор</th>
+            <th>თარიღი/დრო<br />Дата/Время</th>
+            <th>კომენტარი<br />Комментарий</th>
+            <th>მოქმედებები<br />Действия</th>
+            <th>წაშლა<br />Удаление</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr
+            class="{% if r.delete_comment %}deleted-row{% elif r.edit_logs %}edited-row{% endif %}"
+          >
+            <td>{{ r.id }}</td>
+            <td>
+              {% if r.storona != "მშრალი/Сухая" %}{{ r.kolichestvo }}{% else
+              %}–{% endif %}
+            </td>
+            <td>
+              {% if r.gp_padoni or r.gp_ryadi %}{{ r.gp_padoni or 0 }}/{{
+              r.gp_ryadi or 0 }}{% else %}–{% endif %}
+            </td>
+            <td>
+              {% if r.brak_padoni or r.brak_ryadi %}{{ r.brak_padoni or 0 }}/{{
+              r.brak_ryadi or 0 }}{% else %}–{% endif %}
+            </td>
+            <td>
+              {% if r.uc_padoni or r.uc_ryadi %}{{ r.uc_padoni or 0 }}/{{
+              r.uc_ryadi or 0 }}{% else %}–{% endif %}
+            </td>
+            <td>{{ r.naimenovanie }}</td>
+            <td>{{ r.artikul }}</td>
+            <td>{{ r.v_gruppe }}</td>
+            <td>{{ r.kategoriya }}</td>
+            <td>{{ r.storona }}</td>
+            <td>{{ r.operator }}</td>
+            <td>
+              {{ r.created_at.strftime('%d.%m.%Y %H:%M:%S') if r.created_at else
+              '' }}
+            </td>
+            <td>{{ r.comment }}</td>
+            <td>
+              <div class="action-buttons">
+                <a
+                  href="{{ url_for('edit_result', result_id=r.id) }}"
+                  class="edit-button"
+                  title="რედაქტირება / Редактировать"
+                  >✏️</a
+                >
+                <button
+                  class="toggle-edit-btn {% if r.edit_logs %}has-edits{% endif %}"
+                  onclick="toggleEditHistory('{{ r.id }}')"
+                  title="ისტორია / История"
+                >
+                  📜
+                </button>
+              </div>
+            </td>
+            <td>
+              {% if r.delete_comment %}
+              <div class="delete-comment-block">
+                <div class="delete-reason">{{ r.delete_comment }}</div>
+                <span class="delete-info">წაშლილია / Удалено</span>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          <tr id="edit-log-{{ r.id }}" class="edit-log" style="display: none">
+            <td colspan="15">
+              {% if r.edit_logs %}
+              <ul>
+                {% for log in r.edit_logs %}
+                <li>
+                  <strong
+                    >{{ FIELD_LABELS.get(log.field_name, log.field_name)
+                    }}</strong
+                  >: <s>{{ log.old_value }}</s> → <b>{{ log.new_value }}</b>
+                  ({{ log.edited_by }} • {{ log.edited_at.strftime('%d.%m.%Y
+                  %H:%M') }})
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <em>ცვლილებები არ არის / Нет изменений</em>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+      {% for page_num in range(1, pagination.pages + 1) %}
+      <a
+        href="?page={{ page_num }}"
+        class="{% if page_num == pagination.page %}current{% endif %}"
+      >
+        {{ page_num }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <script>
+      const searchInput = document.getElementById("searchInput");
+      searchInput.addEventListener("keyup", function () {
+        const filter = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll(
+          "tbody tr.edit-log, tbody tr:not(.edit-log)"
+        );
+
+        for (let i = 0; i < rows.length; i += 2) {
+          const dataRow = rows[i];
+          const logRow = rows[i + 1];
+          const text = dataRow.innerText.toLowerCase();
+          const shouldShow = text.includes(filter);
+          dataRow.style.display = shouldShow ? "" : "none";
+          if (!shouldShow) {
+            logRow.style.display = "none";
+          }
+        }
+      });
+
+      function toggleEditHistory(id) {
+        const el = document.getElementById("edit-log-" + id);
+        el.style.display = el.style.display === "none" ? "table-row" : "none";
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>დასახელების არჩევა / Выбор наименования</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 50px 16px 20px 16px;
+        box-sizing: border-box;
+        min-height: 100vh;
+      }
+
+      .flash-messages {
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto 20px auto;
+        padding: 0;
+        list-style: none;
+      }
+      .flash {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .flash-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .flash-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      .content-box {
+        display: flex;
+        flex-direction: column;
+        border-radius: 8px;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        gap: 15px;
+        padding: 40px;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        width: 100%;
+        max-width: 700px;
+        margin: 20px auto 40px auto;
+      }
+
+      .logout-link {
+        text-decoration: none;
+        color: #d32f2f;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .back-link-button {
+        text-decoration: none;
+        background-color: #2980b9;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: normal;
+        width: 30%;
+        max-width: 700px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.2s ease;
+      }
+
+      .back-link-button:hover {
+        background-color: #1f6391;
+      }
+
+      .side-form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+      }
+
+      .button-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .button-container button {
+        position: relative;
+        background-color: #8fbad6;
+        color: #fff;
+        border: 2px solid transparent;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        max-width: 600px;
+        padding: 12px 40px 12px 20px;
+        font-weight: normal;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+      }
+
+      .button-container button.selected {
+        background-color: #1f6391;
+        font-weight: bold;
+        border-color: #0c5460;
+      }
+
+      .button-container button.selected::after {
+        content: "✓";
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+        color: #fff;
+      }
+
+      .button-container button:hover {
+        background-color: #1f6391;
+      }
+
+      #submit-btn {
+        padding: 12px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        width: 100%;
+        max-width: 600px;
+        cursor: pointer;
+        color: black;
+      }
+
+      #submit-btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
+      #submit-btn.ready {
+        background-color: #28a745;
+      }
+
+      #submit-btn.ready:hover {
+        background-color: #218838;
+      }
+
+      .form-group {
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 12px;
+      }
+
+      .form-group label {
+        font-weight: bold;
+        margin-bottom: 4px;
+        font-size: 14px;
+        display: block;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .form-row .form-group {
+        flex: 1;
+        margin: 0;
+      }
+
+      textarea {
+        resize: vertical;
+        height: 40px;
+      }
+
+      .input-group-box {
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 16px;
+        margin: 12px 0;
+        width: 100%;
+        max-width: 600px;
+        background-color: #fefefe;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+      }
+
+      .input-group-box h3 {
+        font-size: 16px;
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-align: center;
+        color: #333;
+      }
+
+      .data-table {
+        width: 100%;
+        max-width: 600px;
+        font-size: 16px;
+      }
+
+      .data-table td {
+        padding: 8px 16px;
+      }
+
+      .data-table .label {
+        font-weight: bold;
+        text-align: right;
+        color: #333;
+        width: 40%;
+      }
+
+      .data-table .value {
+        text-align: left;
+        color: #555;
+        width: 60%;
+      }
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+        width: 100%;
+        margin-top: 20px;
+      }
+
+      .action-btn {
+        display: inline-block;
+        text-decoration: none;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        width: 100%;
+        max-width: 600px;
+        text-align: center;
+        transition: background-color 0.2s ease;
+        box-sizing: border-box;
+      }
+
+      .history-btn,
+      .report-btn {
+        background-color: #28a745;
+        color: black;
+      }
+      .history-btn:hover,
+      .report-btn:hover {
+        background-color: #218838;
+      }
+
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1001;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .spinner {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 600px) {
+        .form-row {
+          flex-direction: column;
+          gap: 10px;
+        }
+        .action-btn {
+          width: 100%;
+          max-width: 600px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <span>იტვირთება... / Загрузка...</span>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <ul class="flash-messages">
+      {% for category, message in messages %}
+      <li class="flash flash-{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% endwith %}
+
+    <div class="content-box">
+      {% if session.get('user') == 'admin' %}
+      <a class="logout-link" href="{{ url_for('admin_history') }}"
+        >ისტორია (ადმინი) / История (Админ)</a
+      >
+      {% endif %}
+      <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+      <p>
+        <strong
+          >გამარჯობა {{ operator }} 🙂 / Здравствуйте {{ operator }} 🙂</strong
+        >
+      </p>
+      <a class="back-link-button" href="{{ url_for('select_category') }}"
+        >← უკან / ← Назад</a
+      >
+    </div>
+
+    <div class="content-box">
+      <h2>აირჩიეთ დასახელება: / Выберите наименование:</h2>
+      <form method="post" action="/submit" class="side-form">
+        <input type="hidden" name="factory" value="{{ factory }}" />
+        <input type="hidden" name="side" value="{{ side }}" />
+        <input type="hidden" name="subgroup" value="{{ subgroup }}" />
+        <input type="hidden" name="category" value="{{ category }}" />
+        <input type="hidden" name="product" id="product-input" required />
+        <input type="hidden" name="operator" value="{{ operator }}" />
+
+        <div class="button-container">
+          {% for row in products %}
+          <button type="button" data-product="{{ row }}">{{ row }}</button>
+          {% endfor %}
+        </div>
+
+        {% if side != "მშრალი/Сухая" %}
+        <div class="form-group">
+          <label for="quantity">რაოდენობა: / Количество:</label>
+          <input type="number" name="quantity" id="quantity" required />
+        </div>
+        {% endif %} {% if side == "მშრალი/Сухая" %}
+        <div class="input-group-box">
+          <h3>მზა პროდუქცია / Готовая продукция</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="gp_padoni">პადონი: / Падони:</label>
+              <input type="number" name="gp_padoni" id="gp_padoni" />
+            </div>
+            <div class="form-group">
+              <label for="gp_ryadi">რიგი: / Ряди:</label>
+              <input type="number" name="gp_ryadi" id="gp_ryadi" />
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group-box">
+          <h3>წუნი / Брак</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="brak_padoni">პადონი: / Падони:</label>
+              <input type="number" name="brak_padoni" id="brak_padoni" />
+            </div>
+            <div class="form-group">
+              <label for="brak_ryadi">რიგი: / Ряди:</label>
+              <input type="number" name="brak_ryadi" id="brak_ryadi" />
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group-box">
+          <h3>ჩამოფასებული / уцененная</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="uc_padoni">პადონი: / Падони:</label>
+              <input type="number" name="uc_padoni" id="uc_padoni" />
+            </div>
+            <div class="form-group">
+              <label for="uc_ryadi">რიგი: / Ряди:</label>
+              <input type="number" name="uc_ryadi" id="uc_ryadi" />
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="comment"
+            >კომენტარი (არასავალდებულო): / Комментарий (необязательно):</label
+          >
+          <textarea
+            name="comment"
+            id="comment"
+            placeholder="დამატებითი ინფორმაცია... / Дополнительная информация..."
+          ></textarea>
+        </div>
+
+        <button type="submit" id="submit-btn" disabled>
+          შენახვა / Сохранить
+        </button>
+      </form>
+    </div>
+
+    <div class="content-box">
+      <table class="data-table">
+        <tr>
+          <td class="label">ქარხანა: / Завод:</td>
+          <td class="value">{{ factory }}</td>
+        </tr>
+        <tr>
+          <td class="label">მხარე: / Сторона:</td>
+          <td class="value">{{ side }}</td>
+        </tr>
+        <tr>
+          <td class="label">ჯგუფი: / Группа:</td>
+          <td class="value">{{ subgroup }}</td>
+        </tr>
+        <tr>
+          <td class="label">კატეგორია: / Категория:</td>
+          <td class="value">{{ category }}</td>
+        </tr>
+      </table>
+      <div class="button-group">
+        <a
+          href="{{ url_for('operator_history') }}"
+          class="action-btn history-btn"
+          >📋 ისტორიის ნახვა / Посмотреть историю</a
+        >
+        <a href="{{ url_for('report') }}" class="action-btn report-btn"
+          >📅 რეპორტი / Отчет</a
+        >
+      </div>
+    </div>
+
+    <script>
+      const buttons = document.querySelectorAll(".button-container button");
+      const productInput = document.getElementById("product-input");
+      const submitBtn = document.getElementById("submit-btn");
+      const loadingOverlay = document.getElementById("loading-overlay");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          buttons.forEach((btn) => btn.classList.remove("selected"));
+          button.classList.add("selected");
+          productInput.value = button.getAttribute("data-product");
+          submitBtn.disabled = false;
+          submitBtn.classList.add("ready");
+        });
+      });
+
+      document
+        .querySelector(".side-form")
+        .addEventListener("submit", function () {
+          loadingOverlay.style.display = "flex";
+        });
+    </script>
+  </body>
+</html>

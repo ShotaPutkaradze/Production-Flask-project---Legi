@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ჩანაწერის რედაქტირება / Редактировать запись</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 50px 20px 20px;
+        box-sizing: border-box;
+      }
+
+      .flash-messages {
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto 20px auto;
+        padding: 0;
+        list-style: none;
+      }
+      .flash {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .flash-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .flash-info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      .flash-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .content-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        padding: 30px 40px;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        margin: 20px auto;
+        box-sizing: border-box;
+      }
+
+      .header-box {
+        max-width: 700px;
+      }
+
+      .main-content-box {
+        max-width: 700px;
+      }
+
+      .logout-link {
+        text-decoration: none;
+        color: #d32f2f;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .greeting {
+        color: #333;
+        font-size: 16px;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        font-size: 22px;
+        word-break: break-word;
+        text-align: center;
+      }
+
+      form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .form-group label {
+        font-weight: bold;
+        margin-bottom: 6px;
+        text-align: left;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      textarea {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .input-group-box {
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 20px;
+        background-color: #fefefe;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .input-group-box h3 {
+        font-size: 16px;
+        margin-top: 0;
+        margin-bottom: 10px;
+        text-align: center;
+        color: #333;
+      }
+
+      .button-group {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .button-group button,
+      .button-group a {
+        flex: 1;
+        padding: 12px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+      }
+
+      .save-button {
+        background-color: #28a745;
+        color: black;
+      }
+
+      .cancel-button {
+        background-color: #ccc;
+        color: black;
+      }
+
+      .save-button:hover {
+        background-color: #218838;
+      }
+
+      .cancel-button:hover {
+        background-color: #999;
+      }
+
+      .edit-history {
+        margin-top: 40px;
+        width: 100%;
+        background-color: #f7f7f7;
+        padding: 20px;
+        border-radius: 10px;
+        box-sizing: border-box;
+        border: 1px dashed #ccc;
+      }
+
+      .edit-history h3 {
+        margin-top: 0;
+        text-align: center;
+      }
+
+      .edit-history ul {
+        padding-left: 20px;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .edit-history li {
+        margin-bottom: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <ul class="flash-messages">
+      {% for category, message in messages %}
+      <li class="flash flash-{{ category }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% endwith %}
+
+    <div class="content-box header-box">
+      <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+      <p class="greeting">
+        <strong
+          >გამარჯობა {{ session.get('user', 'ოპერატორი') }} 🙂 / Здравствуйте {{
+          session.get('user', 'Оператор') }} 🙂</strong
+        >
+      </p>
+    </div>
+
+    <div class="content-box main-content-box">
+      <h1>
+        რედაქტირება: {{ result.naimenovanie }} (ID: {{ result.id }}) <br />
+        / Редактировать: {{ result.naimenovanie }} (ID: {{ result.id }})
+      </h1>
+      <form method="POST" class="edit-form">
+        {% if result.storona != "მშრალი/Сухая" %}
+        <div class="form-group">
+          <label for="kolichestvo">რაოდენობა / Количество:</label>
+          <input
+            type="number"
+            step="any"
+            id="kolichestvo"
+            name="kolichestvo"
+            value="{{ result.kolichestvo }}"
+            required
+          />
+        </div>
+        {% endif %} {% if result.storona == "მშრალი/Сухая" %}
+        <div class="input-group-box">
+          <h3>მზა პროდუქცია / Готовая продукция</h3>
+          <div class="form-group">
+            <label for="gp_padoni">პადონი / Падони:</label>
+            <input
+              type="number"
+              id="gp_padoni"
+              name="gp_padoni"
+              value="{{ result.gp_padoni or 0 }}"
+            />
+          </div>
+          <div class="form-group">
+            <label for="gp_ryadi">რიგი / Ряди:</label>
+            <input
+              type="number"
+              id="gp_ryadi"
+              name="gp_ryadi"
+              value="{{ result.gp_ryadi or 0 }}"
+            />
+          </div>
+        </div>
+
+        <div class="input-group-box">
+          <h3>წუნი / Брак</h3>
+          <div class="form-group">
+            <label for="brak_padoni">პადონი / Падони:</label>
+            <input
+              type="number"
+              id="brak_padoni"
+              name="brak_padoni"
+              value="{{ result.brak_padoni or 0 }}"
+            />
+          </div>
+          <div class="form-group">
+            <label for="brak_ryadi">რიგი / Ряди:</label>
+            <input
+              type="number"
+              id="brak_ryadi"
+              name="brak_ryadi"
+              value="{{ result.brak_ryadi or 0 }}"
+            />
+          </div>
+        </div>
+
+        <div class="input-group-box">
+          <h3>ჩამოფასებული / Уцененная</h3>
+          <div class="form-group">
+            <label for="uc_padoni">პადონი / Падони:</label>
+            <input
+              type="number"
+              id="uc_padoni"
+              name="uc_padoni"
+              value="{{ result.uc_padoni or 0 }}"
+            />
+          </div>
+          <div class="form-group">
+            <label for="uc_ryadi">რიგი / Ряди:</label>
+            <input
+              type="number"
+              id="uc_ryadi"
+              name="uc_ryadi"
+              value="{{ result.uc_ryadi or 0 }}"
+            />
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="comment">კომენტარი / Комментарий:</label>
+          <textarea id="comment" name="comment">{{ result.comment }}</textarea>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="save-button">
+            💾 შენახვა / Сохранить
+          </button>
+          <a href="{{ url_for('operator_history') }}" class="cancel-button"
+            >გაუქმება / Отмена</a
+          >
+        </div>
+      </form>
+
+      <div class="edit-history">
+        <h3>ცვლილებების ისტორია / История изменений</h3>
+        {% if result.edit_logs %}
+        <ul>
+          {% for log in result.edit_logs %}
+          <li>
+            <strong
+              >{{ FIELD_LABELS.get(log.field_name, log.field_name) }}</strong
+            >: <s>{{ log.old_value }}</s> → <b>{{ log.new_value }}</b>
+            ({{ log.edited_by }} • {{ log.edited_at.strftime('%d.%m.%Y %H:%M')
+            }})
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p><em>ცვლილებები არ არის / Нет изменений</em></p>
+        {% endif %}
+      </div>
+    </div>
+  </body>
+</html>

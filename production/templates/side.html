@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <title>მხარის არჩევა / Выбор стороны</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <style>
+      html {
+        overflow-y: scroll;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 50px 16px 20px 16px;
+        box-sizing: border-box;
+        min-height: 100vh;
+      }
+
+      .content-box {
+        display: flex;
+        flex-direction: column;
+        border-radius: 8px;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        gap: 15px;
+        padding: 40px;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        width: 100%;
+        max-width: 700px;
+        margin: 20px auto 40px auto;
+      }
+
+      .logout-link {
+        text-decoration: none;
+        color: #d32f2f;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .side-form {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        width: 100%;
+      }
+
+      .side-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .side-buttons button {
+        background-color: #8fbad6;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        max-width: 600px;
+        padding: 12px 20px;
+        font-weight: normal;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.2s ease;
+      }
+
+      .side-buttons button.selected {
+        background-color: #1f6391;
+        font-weight: bold;
+        color: #fff;
+      }
+
+      .side-buttons button:hover {
+        background-color: #1f6391;
+      }
+
+      #submit-btn {
+        padding: 12px 20px;
+        width: 100%;
+        max-width: 600px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: black;
+      }
+
+      #submit-btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
+      #submit-btn.ready {
+        background-color: #28a745;
+      }
+
+      #submit-btn.ready:hover {
+        background-color: #218838;
+      }
+
+      .data-table {
+        border-collapse: collapse;
+        font-size: 16px;
+        width: 100%;
+        max-width: 600px;
+      }
+
+      .data-table td {
+        padding: 8px 16px;
+        word-break: break-word;
+      }
+
+      .data-table .label {
+        font-weight: bold;
+        text-align: right;
+        color: #333;
+        width: 40%;
+      }
+
+      .data-table .value {
+        text-align: left;
+        color: #555;
+        width: 60%;
+      }
+
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        align-items: center;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      .button-group a {
+        text-decoration: none;
+        padding: 12px 20px;
+        background-color: #28a745;
+        color: black;
+        border-radius: 4px;
+        font-size: 16px;
+        width: 50%;
+        max-width: 600px;
+        text-align: center;
+        transition: background-color 0.2s ease;
+      }
+
+      .button-group a:hover {
+        background-color: #218838;
+      }
+
+      @media (max-width: 600px) {
+        .content-box {
+          padding: 30px 20px;
+          max-width: 95%;
+        }
+
+        .side-buttons button,
+        #submit-btn {
+          max-width: 100%;
+        }
+
+        .button-group a {
+          width: 100%; /* Optional: allow full-width for mobile */
+          max-width: 600px;
+        }
+        .button-group {
+          gap: 10px; /* instead of 1px for better vertical touch spacing */
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content-box">
+      {% if session.get('user') == 'admin' %}
+      <a class="logout-link" href="{{ url_for('admin_history') }}"
+        >ისტორია (ადმინი) / История (Админ)</a
+      >
+      {% endif %}
+      <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+      <p>
+        <strong
+          >გამარჯობა {{ operator }} 🙂 / Здравствуйте {{ operator }} 🙂</strong
+        >
+      </p>
+    </div>
+
+    <div class="content-box">
+      <form method="post" class="side-form">
+        <input type="hidden" name="factory" value="{{ factory }}" />
+        <input type="hidden" name="side" id="side-input" required />
+
+        <h2>აირჩიეთ მხარე: / Выберите сторону:</h2>
+
+        <div class="side-buttons">
+          {% for side in sides %}
+          <button type="button" data-side="{{ side }}">{{ side }}</button>
+          {% endfor %}
+        </div>
+
+        <button type="submit" id="submit-btn" disabled>
+          გაგრძელება / Продолжить
+        </button>
+      </form>
+    </div>
+
+    <div class="content-box">
+      <table class="data-table">
+        <tr>
+          <td class="label">ქარხანა: / Завод:</td>
+          <td class="value">{{ factory }}</td>
+        </tr>
+      </table>
+      <div class="button-group">
+        <a href="{{ url_for('operator_history') }}"
+          >📋 ისტორიის ნახვა / Посмотреть историю</a
+        >
+      </div>
+    </div>
+
+    <script>
+      const buttons = document.querySelectorAll(".side-buttons button");
+      const sideInput = document.getElementById("side-input");
+      const submitBtn = document.getElementById("submit-btn");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          buttons.forEach((btn) => btn.classList.remove("selected"));
+          button.classList.add("selected");
+          sideInput.value = button.getAttribute("data-side");
+          submitBtn.disabled = false;
+          submitBtn.classList.add("ready");
+        });
+      });
+    </script>
+  </body>
+</html>

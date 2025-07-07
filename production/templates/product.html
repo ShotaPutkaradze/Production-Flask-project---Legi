@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>დასახელების არჩევა / Выбор наименования</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 50px 16px 20px 16px;
+        box-sizing: border-box;
+        min-height: 100vh;
+      }
+
+      .content-box {
+        display: flex;
+        flex-direction: column;
+        border-radius: 8px;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        gap: 15px;
+        padding: 40px;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        width: 100%;
+        max-width: 700px;
+        margin: 20px auto 40px auto;
+      }
+
+      .logout-link {
+        text-decoration: none;
+        color: #d32f2f;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .back-link-button {
+        background-color: #2980b9;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        width: 30%;
+        text-align: center;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .back-link-button:hover {
+        background-color: #1f6391;
+      }
+
+      .side-form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+      }
+
+      .button-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .button-container button {
+        background-color: #8fbad6;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        max-width: 600px;
+        padding: 12px 20px;
+        font-weight: normal;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.2s ease;
+      }
+
+      .button-container button.selected {
+        background-color: #1f6391;
+        font-weight: bold;
+        color: #fff;
+      }
+
+      .button-container button:hover {
+        background-color: #1f6391;
+      }
+
+      #submit-btn {
+        padding: 12px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        width: 100%;
+        max-width: 600px;
+        cursor: pointer;
+        color: black;
+      }
+
+      #submit-btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
+      #submit-btn.ready {
+        background-color: #28a745;
+      }
+
+      #submit-btn.ready:hover {
+        background-color: #218838;
+      }
+
+      .form-group {
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 12px;
+      }
+
+      .form-group label {
+        font-weight: bold;
+        margin-bottom: 4px;
+        font-size: 14px;
+        display: block;
+      }
+
+      .form-group input,
+      .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .form-row .form-group {
+        flex: 1;
+        margin: 0;
+      }
+
+      textarea {
+        resize: vertical;
+        height: 40px;
+      }
+
+      .input-group-box {
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 16px;
+        margin: 12px 0;
+        width: 100%;
+        max-width: 600px;
+        background-color: #fefefe;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+      }
+
+      .input-group-box h3 {
+        font-size: 16px;
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-align: center;
+        color: #333;
+      }
+
+      .data-table {
+        width: 100%;
+        max-width: 600px;
+        font-size: 16px;
+      }
+
+      .data-table td {
+        padding: 8px 16px;
+      }
+
+      .data-table .label {
+        font-weight: bold;
+        text-align: right;
+        color: #333;
+        width: 40%;
+      }
+
+      .data-table .value {
+        text-align: left;
+        color: #555;
+        width: 60%;
+      }
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        align-items: center;
+        width: 100%;
+      }
+
+      .button-group a {
+        text-decoration: none;
+        padding: 12px 20px;
+        background-color: #28a745;
+        color: black;
+        border-radius: 4px;
+        font-size: 16px;
+        width: 50%;
+        max-width: 600px;
+        text-align: center;
+        transition: background-color 0.2s ease;
+      }
+
+      .button-group a:hover {
+        background-color: #218838;
+      }
+
+      @media (max-width: 600px) {
+        .form-row {
+          flex-direction: column;
+          gap: 10px;
+        }
+        .button-group a {
+          width: 100%; /* Optional: allow full-width for mobile */
+          max-width: 600px;
+        }
+        .button-group {
+          gap: 10px; /* instead of 1px for better vertical touch spacing */
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content-box">
+      {% if session.get('user') == 'admin' %}
+      <a class="logout-link" href="{{ url_for('admin_history') }}"
+        >ისტორია (ადმინი) / История (Админ)</a
+      >
+      {% endif %}
+      <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+      <p>
+        <strong
+          >გამარჯობა {{ operator }} 🙂 / Здравствуйте {{ operator }} 🙂</strong
+        >
+      </p>
+      <a class="back-link-button" href="{{ url_for('select_category') }}"
+        >← უკან / ← Назад</a
+      >
+    </div>
+
+    <div class="content-box">
+      <h2>აირჩიეთ დასახელება: / Выберите наименование:</h2>
+      <form method="post" action="/submit" class="side-form">
+        <input type="hidden" name="factory" value="{{ factory }}" />
+        <input type="hidden" name="side" value="{{ side }}" />
+        <input type="hidden" name="subgroup" value="{{ subgroup }}" />
+        <input type="hidden" name="category" value="{{ category }}" />
+        <input type="hidden" name="product" id="product-input" required />
+        <input type="hidden" name="operator" value="{{ operator }}" />
+
+        <div class="button-container">
+          {% for row in products %}
+          <button type="button" data-product="{{ row }}">{{ row }}</button>
+          {% endfor %}
+        </div>
+
+        <!-- --- განახლებული ლოგიკა --- -->
+        {% if side != "მშრალი/Сухая" %}
+        <div class="form-group">
+          <label for="quantity">რაოდენობა: / Количество:</label>
+          <input type="number" name="quantity" id="quantity" required />
+        </div>
+        {% endif %} {% if side == "მშრალი/Сухая" %}
+        <div class="input-group-box">
+          <h3>მზა პროდუქცია / Готовая продукция</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="gp_padoni">პადონი: / Падони:</label>
+              <input type="number" name="gp_padoni" id="gp_padoni" />
+            </div>
+            <div class="form-group">
+              <label for="gp_ryadi">რიგი: / Ряди:</label>
+              <input type="number" name="gp_ryadi" id="gp_ryadi" />
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group-box">
+          <h3>წუნი / Брак</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="brak_padoni">პადონი: / Падони:</label>
+              <input type="number" name="brak_padoni" id="brak_padoni" />
+            </div>
+            <div class="form-group">
+              <label for="brak_ryadi">რიგი: / Ряди:</label>
+              <input type="number" name="brak_ryadi" id="brak_ryadi" />
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group-box">
+          <h3>ჩამოფასებული / уцененная</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="uc_padoni">პადონი: / Падони:</label>
+              <input type="number" name="uc_padoni" id="uc_padoni" />
+            </div>
+            <div class="form-group">
+              <label for="uc_ryadi">რიგი: / Ряди:</label>
+              <input type="number" name="uc_ryadi" id="uc_ryadi" />
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        <!-- --- ლოგიკის დასასრული --- -->
+
+        <div class="form-group">
+          <label for="comment"
+            >კომენტარი (არასავალდებულო): / Комментарий (необязательно):</label
+          >
+          <textarea
+            name="comment"
+            id="comment"
+            placeholder="დამატებითი ინფორმაცია... / Дополнительная информация..."
+          ></textarea>
+        </div>
+
+        <button type="submit" id="submit-btn" disabled>
+          შენახვა / Сохранить
+        </button>
+      </form>
+    </div>
+
+    <div class="content-box">
+      <table class="data-table">
+        <tr>
+          <td class="label">ქარხანა: / Завод:</td>
+          <td class="value">{{ factory }}</td>
+        </tr>
+        <tr>
+          <td class="label">მხარე: / Сторона:</td>
+          <td class="value">{{ side }}</td>
+        </tr>
+        <tr>
+          <td class="label">ჯგუფი: / Группа:</td>
+          <td class="value">{{ subgroup }}</td>
+        </tr>
+        <tr>
+          <td class="label">კატეგორია: / Категория:</td>
+          <td class="value">{{ category }}</td>
+        </tr>
+      </table>
+      <div class="button-group">
+        <a href="{{ url_for('operator_history') }}"
+          >📋 ისტორიის ნახვა / Посмотреть историю</a
+        >
+      </div>
+    </div>
+
+    <script>
+      const buttons = document.querySelectorAll(".button-container button");
+      const productInput = document.getElementById("product-input");
+      const submitBtn = document.getElementById("submit-btn");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          buttons.forEach((btn) => btn.classList.remove("selected"));
+          button.classList.add("selected");
+          productInput.value = button.getAttribute("data-product");
+          submitBtn.disabled = false;
+          submitBtn.classList.add("ready");
+        });
+      });
+    </script>
+  </body>
+</html>

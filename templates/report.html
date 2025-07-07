@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8" />
+    <title>რეპორტი / Отчет</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+        .content-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            padding: 30px 40px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            margin: 20px auto;
+            box-sizing: border-box;
+        }
+        .header-box {
+            max-width: 700px;
+        }
+        .main-content-box {
+            max-width: 1200px;
+        }
+        .logout-link {
+            text-decoration: none;
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .greeting {
+            color: #333;
+            font-size: 16px;
+            text-align: center;
+        }
+        h1, h2 {
+            text-align: center;
+            margin: 0 0 15px 0;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .action-btn {
+            display: inline-block;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            transition: background-color 0.2s ease;
+            box-sizing: border-box;
+            border: none;
+            cursor: pointer;
+        }
+        .history-btn {
+            background-color: #2980b9;
+            color: white;
+        }
+        .history-btn:hover {
+            background-color: #1f6391;
+        }
+        .add-new-btn {
+            background-color: #28a745;
+            color: black;
+        }
+        .add-new-btn:hover {
+            background-color: #218838;
+        }
+        .date-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+        }
+        .date-form label {
+            font-weight: bold;
+        }
+        .date-form input[type="date"], .date-form select {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .date-form button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #28a745;
+            color: black;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+        }
+        .report-section {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .section-title {
+            font-size: 20px;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .summary-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        .summary-card {
+            background: #fdfdfd;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-card h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+        .summary-card .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 30px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 14px;
+        }
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: center;
+        }
+        .no-data {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 18px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-box header-box">
+        <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+        <p class="greeting">
+            <strong>გამარჯობა {{ session.get('user', 'მომხმარებელი') }} 🙂 / Здравствуйте {{ session.get('user', 'Пользователь') }} 🙂</strong>
+        </p>
+        <div class="button-group">
+            <a href="{% if session.get('user') == 'admin' %}{{ url_for('admin_history') }}{% else %}{{ url_for('operator_history') }}{% endif %}" class="action-btn history-btn">📋 ისტორიის ნახვა / Посмотреть историю</a>
+            {% if session.get('user') != 'admin' %}
+            <a href="{{ url_for('select_side') }}" class="action-btn add-new-btn">➕ ახალი ჩანაწერის დამატება / Добавить новую запись</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="content-box main-content-box">
+        <h1>რეპორტი / Отчет</h1>
+        <form method="GET" action="{{ url_for('report') }}" class="date-form">
+            <div class="form-row">
+                <label for="start_date">საიდან / С:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date or '' }}" required>
+                
+                <label for="end_date">სადამდე / По:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}" required>
+
+                <label for="operator">ოპერატორი / Оператор:</label>
+                <select name="operator" id="operator">
+                    <option value="">ყველა / Все</option>
+                    {% for op in all_operators %}
+                        <option value="{{ op }}" {% if op == selected_operator %}selected{% endif %}>{{ op }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">რეპორტის გენერაცია / Сгенерировать отчет</button>
+        </form>
+    </div>
+
+    {% if totals %}
+    <div class="content-box main-content-box">
+        <h2>შეჯამება {{ start_date }}-დან {{ end_date }}-მდე / Сводка за период с {{ start_date }} по {{ end_date }}</h2>
+        
+        <div class="report-section">
+            <div class="summary-section">
+                <div class="summary-card">
+                    <h3>(სველი) რაოდენობა<br>(Мокрая) Количество</h3>
+                    <p class="value">{{ "%.2f"|format(totals.total_kolichestvo|float) if totals.total_kolichestvo is not none else 0 }}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>(მშრალი) მზა პროდუქცია<br>(Сухая) Готовая продукция</h3>
+                    <p class="value">პადონი/Падони: {{ totals.total_gp_padoni or 0 }}<br>რიგი/Ряди: {{ totals.total_gp_ryadi or 0 }}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>(მშრალი) წუნი<br>(Сухая) Брак</h3>
+                    <p class="value">პადონი/Падони: {{ totals.total_brak_padoni or 0 }}<br>რიგი/Ряди: {{ totals.total_brak_ryadi or 0 }}</p>
+                </div>
+                <div class="summary-card">
+                    <h3>(მშრალი) ჩამოფასებული<br>(Сухая) Уцененная</h3>
+                    <p class="value">პადონი/Падони: {{ totals.total_uc_padoni or 0 }}<br>რიგი/Ряди: {{ totals.total_uc_ryadi or 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <h3 class="section-title">დეტალური ჩანაწერები / Детальные записи</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>თარიღი/დრო<br>Дата/Время</th>
+                            <th>დასახელება<br>Наименование</th>
+                            <th>რაოდენობა<br>Количество</th>
+                            <th>მზა პროდ. (პად/რიგი)<br>Готовая (Пад/Ряд)</th>
+                            <th>წუნი (პად/რიგი)<br>Брак (Пад/Ряд)</th>
+                            <th>ჩამოფ. (პად/რიგი)<br>Уцен. (Пад/Ряд)</th>
+                            <th>ოპერატორი<br>Оператор</th>
+                            <th>კომენტარი<br>Комментарий</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in results %}
+                        <tr>
+                            <td>{{ r.id }}</td>
+                            <td>{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>{{ r.naimenovanie }}</td>
+                            <td>{% if r.kolichestvo %}{{ r.kolichestvo }}{% else %}–{% endif %}</td>
+                            <td>{% if r.gp_padoni or r.gp_ryadi %}{{ r.gp_padoni or 0 }}/{{ r.gp_ryadi or 0 }}{% else %}–{% endif %}</td>
+                            <td>{% if r.brak_padoni or r.brak_ryadi %}{{ r.brak_padoni or 0 }}/{{ r.brak_ryadi or 0 }}{% else %}–{% endif %}</td>
+                            <td>{% if r.uc_padoni or r.uc_ryadi %}{{ r.uc_padoni or 0 }}/{{ r.uc_ryadi or 0 }}{% else %}–{% endif %}</td>
+                            <td>{{ r.operator }}</td>
+                            <td>{{ r.comment }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% elif start_date and end_date %}
+        <div class="content-box">
+            <p class="no-data">არჩეულ პერიოდში მონაცემები არ მოიძებნა. / Нет данных за выбранный период.</p>
+        </div>
+    {% endif %}
+</body>
+</html>

@@ -15,12 +15,16 @@ class Result(db.Model):
     kolichestvo = db.Column(db.String(50))
     operator = db.Column(db.String(100))
 
+    # ✅ NEW FIELDS
     gp_padoni = db.Column(db.Integer)
     gp_ryadi = db.Column(db.Integer)
     brak_padoni = db.Column(db.Integer)
     brak_ryadi = db.Column(db.Integer)
+    
+    # --- დამატებული ველები ---
     uc_padoni = db.Column(db.Integer)
     uc_ryadi = db.Column(db.Integer)
+    # --- დასასრული ---
 
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     comment = db.Column(db.Text)
@@ -35,21 +39,7 @@ class EditHistory(db.Model):
     field_name = db.Column(db.String(100), nullable=False)
     old_value = db.Column(db.Text)
     new_value = db.Column(db.Text)
-    edited_by = db.Column(db.String(100))
+    edited_by = db.Column(db.String(100))  # operator/admin username
     edited_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     result = db.relationship('Result', backref='edit_logs')
-
-class Nomenclature(db.Model):
-    __tablename__ = 'nomenclature'
-    id = db.Column(db.Integer, primary_key=True)
-    zavod = db.Column(db.String(100), nullable=False)
-    storona = db.Column(db.String(100), nullable=False)
-    v_gruppe = db.Column(db.String(100), nullable=False)
-    kategoriya = db.Column(db.String(200), nullable=False)
-    naimenovanie = db.Column(db.String(200), nullable=False)
-    # --- უნიკალურობის შეზღუდვა გადავიდა არტიკულზე ---
-    artikul = db.Column(db.String(100), nullable=False, unique=True)
-
-    def __repr__(self):
-        return f'<Nomenclature {self.naimenovanie}>'

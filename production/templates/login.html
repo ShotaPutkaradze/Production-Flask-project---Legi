@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ოპერატორის ავტორიზაცია / Вход для оператора</title>
+    <style>
+      html {
+        overflow-y: scroll;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 100px 16px 20px 16px;
+        box-sizing: border-box;
+        min-height: 100vh;
+      }
+
+      .login-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 40px;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 22px;
+        text-align: center; /* Ensures text is centered if it wraps */
+      }
+
+      label {
+        font-size: 16px;
+        margin-bottom: 5px;
+      }
+
+      select,
+      input[type="password"] {
+        width: 100%;
+        max-width: 600px;
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+
+      button {
+        padding: 12px 20px;
+        width: 100%;
+        max-width: 600px;
+        font-size: 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #28a745;
+        color: black;
+      }
+
+      button:hover {
+        background-color: #218838;
+      }
+
+      .error-message {
+        color: red;
+        font-size: 14px;
+        margin-top: -10px;
+      }
+
+      @media (max-width: 600px) {
+        .login-container {
+          padding: 30px 20px;
+          max-width: 95%;
+        }
+
+        select,
+        input[type="password"],
+        button {
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-container">
+      <h2>ოპერატორის ავტორიზაცია / Вход для оператора</h2>
+      <form
+        method="POST"
+        action="{{ url_for('login') }}"
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 15px;
+          width: 100%;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 600px;
+          "
+        >
+          <label for="username">აირჩიეთ ოპერატორი / Выберите оператора</label>
+          <select name="username" id="username" required>
+            <option value="" disabled selected>
+              აირჩიეთ მომხმარებლის სახელი / Выберите ваше имя пользователя
+            </option>
+            {% for op in operators %}
+            <option value="{{ op }}">{{ op }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 600px;
+          "
+        >
+          <label for="password">პაროლი / Пароль</label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            placeholder="შეიყვანეთ პაროლი / Введите пароль"
+            required
+          />
+        </div>
+
+        <button type="submit">შესვლა / Войти</button>
+      </form>
+
+      {% with messages = get_flashed_messages(category_filter=["error"]) %} {%
+      if messages %}
+      <div class="error-message">{{ messages[0] }}</div>
+      {% endif %} {% endwith %}
+    </div>
+  </body>
+</html>

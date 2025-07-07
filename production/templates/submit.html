@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#28a745" />
+    <title>მონაცემები შენახულია / Данные сохранены</title>
+    <style>
+      html {
+        overflow-y: scroll;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        background-color: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 100px 16px 20px;
+        box-sizing: border-box;
+        min-height: 100vh;
+        text-align: center;
+      }
+
+      .content-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        padding: 40px;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 700px;
+        margin: 20px auto 40px;
+      }
+
+      .logout-link {
+        text-decoration: none;
+        color: #d32f2f;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        color: #28a745;
+      }
+
+      .data-table {
+        border-collapse: collapse;
+        font-size: 16px;
+        width: 100%;
+        max-width: 600px;
+        margin-top: 20px;
+      }
+
+      .data-table td {
+        padding: 8px 16px;
+      }
+
+      .data-table .label {
+        font-weight: bold;
+        text-align: right;
+        color: #333;
+        width: 40%;
+      }
+
+      .data-table .value {
+        text-align: left;
+        color: #555;
+        width: 60%;
+      }
+
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        align-items: center;
+        width: 100%;
+        margin-top: 30px;
+      }
+
+      .button-group a {
+        text-decoration: none;
+        padding: 12px 20px;
+        background-color: #28a745;
+        color: black;
+        border-radius: 4px;
+        font-size: 16px;
+        width: 50%;
+        max-width: 600px;
+        text-align: center;
+        transition: background-color 0.2s ease;
+      }
+
+      .button-group a:hover {
+        background-color: #218838;
+      }
+
+      /* 👇 Improved mobile optimization */
+      @media (max-width: 600px) {
+        body {
+          padding: 60px 12px 20px;
+        }
+
+        .content-box {
+          padding: 24px 16px;
+          max-width: 100%;
+          gap: 12px;
+        }
+
+        h1 {
+          font-size: 20px;
+        }
+
+        .data-table {
+          font-size: 15px;
+          margin-top: 16px;
+        }
+
+        .data-table tr {
+          display: block;
+          margin-bottom: 12px;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 8px;
+        }
+
+        .data-table td {
+          display: block;
+          width: 100%;
+          padding: 4px 0;
+          text-align: left !important;
+        }
+
+        .data-table .label {
+          font-weight: bold;
+          color: #444;
+        }
+
+        .data-table .value {
+          margin-top: 2px;
+          color: #333;
+        }
+
+        .button-group {
+          gap: 12px;
+        }
+
+        .button-group a {
+          width: 100%;
+          font-size: 15px;
+          padding: 10px 14px;
+        }
+
+        .logout-link {
+          font-size: 14px;
+        }
+
+        p strong {
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content-box">
+      {% if session.get('user') == 'admin' %}
+      <a class="logout-link" href="{{ url_for('admin_history') }}"
+        >ისტორია (ადმინი) / История (Админ)</a
+      >
+      {% endif %}
+      <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+      <p>
+        <strong
+          >გამარჯობა {{ operator }} 🙂 / Здравствуйте {{ operator }} 🙂</strong
+        >
+      </p>
+      <h1>✅ შენახულია / Сохранено</h1>
+    </div>
+
+    <div class="content-box">
+      <table class="data-table">
+        <tr>
+          <td class="label">ქარხანა: / Завод:</td>
+          <td class="value">{{ data["Завод"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">მხარე: / Сторона:</td>
+          <td class="value">{{ data["Сторона"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">ჯგუფი: / Группа:</td>
+          <td class="value">{{ data["В Группе"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">კატეგორია: / Категория:</td>
+          <td class="value">{{ data["Категория"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">დასახელება: / Наименование:</td>
+          <td class="value">{{ data["Наименование"] }}</td>
+        </tr>
+
+        {% if data["Сторона"] != "Сухая" %}
+        <tr>
+          <td class="label">რაოდენობა: / Количество:</td>
+          <td class="value">{{ data["Количество"] }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td class="label">მზა პროდუქცია: / Готовая продукция:</td>
+          <td class="value">
+            პადონი: / Падони: {{ data["gp_padoni"] }}<br />რიგი: / Ряди: {{
+            data["gp_ryadi"] }}
+          </td>
+        </tr>
+        <tr>
+          <td class="label">წუნი: / Брак:</td>
+          <td class="value">
+            პადონი: / Падони: {{ data["brak_padoni"] }}<br />რიგი: / Ряди: {{
+            data["brak_ryadi"] }}
+          </td>
+        </tr>
+        <tr>
+          <td class="label">ჩამოფასებული: / Уцененная:</td>
+          <td class="value">
+            პადონი: / Падони: {{ data["uc_padoni"] }}<br />რიგი: / Ряди: {{
+            data["uc_ryadi"] }}
+          </td>
+        </tr>
+        {% endif %}
+
+        <tr>
+          <td class="label">ოპერატორი: / Оператор:</td>
+          <td class="value">{{ data["Оператор"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">კომენტარი: / Комментарий:</td>
+          <td class="value">{{ data["Комментарий"] }}</td>
+        </tr>
+      </table>
+
+      <div class="button-group">
+        <a href="{{ url_for('restart') }}"
+          >🔁 თავიდან დამატება / Ещё добавить</a
+        >
+        <a href="{{ url_for('operator_history') }}"
+          >📋 ისტორიის ნახვა / Посмотреть историю</a
+        >
+      </div>
+    </div>
+  </body>
+</html>

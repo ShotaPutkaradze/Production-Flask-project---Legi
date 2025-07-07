@@ -1,116 +1,83 @@
 # app.py
-
-# --- Core Imports ---
 from flask import Flask, render_template, request, make_response, session, url_for, flash, redirect
-from models import db, Result, EditHistory, Nomenclature
+from models import db, Result, EditHistory
 import pandas as pd
 import os
-import re 
-import io
-import csv
+
 import logging
 import secrets
 from logging.handlers import RotatingFileHandler
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import desc, func, cast, Date
-from datetime import datetime, timedelta 
+from sqlalchemy import desc
+import csv
+import io
 
-# === 1. FLASK APP SETUP ===
-# Initialize the Flask application
+
+
+
+
+
+
+# === Flask App Setup === #
 app = Flask(__name__)
-# Load configuration from the config.py file
-app.config.from_object('config')
-# Initialize the database with the app
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:0okmNJI(!@localhost/postgres'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
+app.secret_key = secrets.token_hex(16)
 
-# === 2. LOGGING SETUP ===
-# Ensure the 'logs' directory exists
+with app.app_context():
+    db.create_all()
+
+    # Load operators.csv
+operators_df = pd.read_csv('operators.csv')
+credentials = {}
+for _, row in operators_df.iterrows():
+    credentials[row["username"]] = {
+        "password": row["password"],
+        "factory": row["factory"]
+    }
+operator_factories = dict(zip(operators_df['username'], operators_df['factory']))
+
+
+# === CSV Data === #
+df = pd.read_csv("nomenclature.csv")
+
+
+
+# === Logging === #
 os.makedirs('logs', exist_ok=True)
-# Configure rotating file handler to limit log file size
 file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10)
-file_handler.setLevel(logging.INFO) 
-app.logger.setLevel(logging.INFO)
-# Define the format for log messages
+file_handler.setLevel(logging.ERROR)
 file_handler.setFormatter(logging.Formatter(
     '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 ))
 app.logger.addHandler(file_handler)
 
 
-# === 3. INITIAL DATA LOADING ===
-# This block runs once when the application starts
-with app.app_context():
-    # Create all database tables based on models.py if they don't exist
-    db.create_all()
-
-    # Load operator credentials from operators.csv
-    try:
-        operators_df = pd.read_csv('operators.csv', encoding='utf-8-sig')
-        credentials = {}
-        for _, row in operators_df.iterrows():
-            credentials[row["username"]] = {
-                "password": str(row["password"]),
-                "Завод": row["Завод"]
-            }
-        operator_factories = dict(zip(operators_df['username'], operators_df['Завод']))
-        app.logger.info("✅ Operators.csv loaded successfully.")
-    except FileNotFoundError:
-        credentials = {}
-        app.logger.error("❌ FATAL: operators.csv not found.")
-
-    # Load nomenclature data from the database to create an Artikuls map
-    name_to_artikul = {}
-    try:
-        nomen_items = Nomenclature.query.all()
-        name_to_artikul = {item.naimenovanie: item.artikul for item in nomen_items}
-        app.logger.info(f"✅ Successfully loaded {len(nomen_items)} items from Nomenclature table.")
-    except Exception as e:
-        app.logger.error(f"❌ Could not load data from Nomenclature table: {e}")
 
 
-# === 4. UTILITY FUNCTIONS ===
-def natural_sort_key(s):
-    """
-    Sorts strings containing numbers in a human-friendly way (e.g., 4cm, 8cm, 10cm).
-    """
-    return [int(text) if text.isdigit() else text.lower() for text in re.split('([0-9]+)', s)]
-
+# === Utility Function === #
 def get_unique(column, **filters):
-    """
-    Queries the Nomenclature table to get unique, sorted values from a specific column,
-    based on the provided filters.
-    """
-    query = db.session.query(getattr(Nomenclature, column)).distinct()
-    
+    filtered = df
     for col, val in filters.items():
-        # The filter keys (e.g., 'zavod') are lowercase model attribute names
-        if val:
-            stripped_val = val.strip()
-            query = query.filter(getattr(Nomenclature, col.lower()) == stripped_val)
-            
-    results = [r[0] for r in query.all()]
-    sorted_results = sorted(results, key=natural_sort_key)
-    return sorted_results
+        filtered = filtered[filtered[col] == val]
+    return sorted(filtered[column].dropna().unique())
 
-# === 5. ROUTES ===
-
+# === Routes === #
 @app.route("/", methods=["GET", "POST"])
 def login():
-    """
-    Handles user login. On POST, it verifies credentials against the loaded data.
-    On successful login, it stores user info in the session and redirects.
-    """
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
 
+
         if username in credentials:
-            if credentials[username]["password"] == str(password):
+            if credentials[username]["password"] == password:
                 session["user"] = username
-                session["factory"] = credentials[username]["Завод"]
+                session["factory"] = credentials[username]["factory"]
 
                 if username == "admin":
-                    return redirect(url_for("admin_history"))
+                    return redirect(url_for("admin_history"))  # 👈 redirect admin directly to history
 
                 return redirect(url_for("select_side"))
             else:
@@ -122,106 +89,14 @@ def login():
 
 @app.route("/logout")
 def logout():
-    """
-    Clears the session to log the user out and redirects to the login page.
-    """
     session.clear()
     return redirect(url_for("login"))
 
 
-@app.route("/report")
-def report():
-    """
-    Generates and displays a report based on a date range and an optional operator filter.
-    """
-    if "user" not in session:
-        return redirect(url_for("login"))
-    
-    # Get parameters from the URL
-    start_date_str = request.args.get('start_date')
-    end_date_str = request.args.get('end_date')
-    selected_operator = request.args.get('operator')
-    
-    totals = None
-    results = []
-
-    # Fetch all unique operators for the filter dropdown
-    all_operators = [op[0] for op in db.session.query(Result.operator).distinct().order_by(Result.operator).all()]
-
-    if start_date_str and end_date_str:
-        try:
-            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-            # Add 1 day to the end_date to include all records from that day
-            end_date = datetime.strptime(end_date_str, '%Y-%m-%d') + timedelta(days=1)
-            
-            # Base query for the date range
-            query = Result.query.filter(
-                Result.created_at >= start_date,
-                Result.created_at < end_date
-            )
-
-            # Apply operator filter if one is selected
-            if selected_operator:
-                query = query.filter(Result.operator == selected_operator)
-            
-            results = query.order_by(Result.created_at.desc()).all()
-
-            # --- Calculate totals in Python for robustness ---
-            total_kolichestvo = 0
-            total_gp_padoni = 0
-            total_gp_ryadi = 0
-            total_brak_padoni = 0
-            total_brak_ryadi = 0
-            total_uc_padoni = 0
-            total_uc_ryadi = 0
-
-            for r in results:
-                try:
-                    if r.kolichestvo and r.kolichestvo.strip():
-                        total_kolichestvo += float(r.kolichestvo)
-                except (ValueError, TypeError):
-                    pass # Ignore if kolichestvo is not a valid number
-
-                total_gp_padoni += r.gp_padoni or 0
-                total_gp_ryadi += r.gp_ryadi or 0
-                total_brak_padoni += r.brak_padoni or 0
-                total_brak_ryadi += r.brak_ryadi or 0
-                total_uc_padoni += r.uc_padoni or 0
-                total_uc_ryadi += r.uc_ryadi or 0
-
-            totals = {
-                "total_kolichestvo": total_kolichestvo,
-                "total_gp_padoni": total_gp_padoni,
-                "total_gp_ryadi": total_gp_ryadi,
-                "total_brak_padoni": total_brak_padoni,
-                "total_brak_ryadi": total_brak_ryadi,
-                "total_uc_padoni": total_uc_padoni,
-                "total_uc_ryadi": total_uc_ryadi,
-            }
-
-        except ValueError:
-            flash("არასწორი თარიღის ფორმატი. / Неверный формат даты.", "error")
-            return redirect(url_for('report'))
-        except Exception as e:
-            app.logger.error(f"Error in /report route: {e}", exc_info=True)
-            flash("რეპორტის გენერაციისას მოხდა შეცდომა. დეტალებისთვის იხილეთ ლოგ ფაილი.", "error")
-            return redirect(url_for('report'))
-
-
-    return render_template('report.html', 
-                           start_date=start_date_str,
-                           end_date=end_date_str,
-                           selected_operator=selected_operator,
-                           all_operators=all_operators,
-                           totals=totals, 
-                           results=results)
 
 
 @app.route("/admin_history")
 def admin_history():
-    """
-    Displays a paginated history of all records for the admin.
-    """
     if session.get("user") != "admin":
         return redirect(url_for("login"))
 
@@ -234,9 +109,11 @@ def admin_history():
         )
         results = pagination.items
 
-        # Add 'artikul' to each result object for display
+        name_to_artikul = dict(zip(df["Наименование"], df["Артикул"]))
         for r in results:
             r.artikul = name_to_artikul.get(r.naimenovanie, "")
+
+
 
         FIELD_LABELS = {
             "kolichestvo": "Количество",
@@ -257,16 +134,13 @@ def admin_history():
         )
 
     except Exception as e:
-        app.logger.error("Error fetching admin history:", exc_info=True)
-        return f"❌ Error fetching history: {str(e)}", 500
+        app.logger.error("Ошибка при получении истории (admin):", exc_info=True)
+        return f"❌ Ошибка при получении истории: {str(e)}", 500
 
 
 
 @app.route("/operator_history")
 def operator_history():
-    """
-    Displays a paginated history of records for the logged-in operator.
-    """
     if "user" not in session or session["user"] == "admin":
         return redirect(url_for("login"))
 
@@ -280,10 +154,15 @@ def operator_history():
 
         results = pagination.items
 
-        # Add 'artikul' to each result object
+        # --- დამატებული ლოგიკა ---
+        # ვქმნით ლექსიკონს, რათა დასახელებით ვიპოვოთ არტიკული
+        name_to_artikul = dict(zip(df["Наименование"], df["Артикул"]))
+        # ვუვლით ყველა ჩანაწერს და ვამატებთ არტიკულს
         for r in results:
             r.artikul = name_to_artikul.get(r.naimenovanie, "")
+        # --- ლოგიკის დასასრული ---
 
+        # ✅ Human-readable field labels
         FIELD_LABELS = {
             "kolichestvo": "Количество",
             "comment": "Комментарий",
@@ -297,22 +176,19 @@ def operator_history():
 
         return render_template(
             "operator_history.html",
-            results=results, 
+            results=results, # განახლებული results, რომელიც უკვე შეიცავს არტიკულს
             pagination=pagination,
             operator=user,
-            FIELD_LABELS=FIELD_LABELS
+            FIELD_LABELS=FIELD_LABELS  # ✅ pass to template
         )
     except Exception as e:
-        app.logger.error("Error fetching operator history:", exc_info=True)
-        return f"❌ Error fetching operator history: {str(e)}", 500
+        app.logger.error("Ошибка при получении истории оператора:", exc_info=True)
+        return f"❌ Ошибка при получении истории оператора: {str(e)}", 500
 
 
 
 @app.route("/side", methods=["GET", "POST"])
 def select_side():
-    """
-    First step of data entry: selecting the production side (wet/dry).
-    """
     if "user" not in session:
         return redirect(url_for("login"))
 
@@ -331,38 +207,41 @@ def select_side():
             return redirect(url_for("login"))
 
     operator = session.get("user")
-    sides = get_unique("storona", zavod=factory)
+    sides = ["Мокрая", "Сухая"]
+
+    # 🔽 Fetch full operator history (no limit)
+    full_history = Result.query.filter_by(operator=operator).order_by(Result.created_at.desc()).all()
 
     return render_template(
         "side.html",
         factory=factory,
         sides=sides,
-        operator=operator
+        operator=operator,
+        results=full_history  # pass to template
     )
 
 
 
 @app.route("/subgroup", methods=["GET", "POST"])
 def select_subgroup():
-    """
-    Second step: selecting the subgroup based on factory and side.
-    """
     if request.method == "POST":
-        session["factory"] = request.form.get("factory", "").strip()
-        session["side"] = request.form.get("side", "").strip()
-    
-    factory = session.get("factory")
-    side = session.get("side")
-    if not all([factory, side]):
-        return redirect(url_for("select_side"))
+        factory = request.form.get("factory", "").strip()
+        side = request.form.get("side", "").strip()
 
-    if request.method == "POST":
-        subgroup = request.form.get("subgroup")
-        if subgroup:
-            session["subgroup"] = subgroup
-            return redirect(url_for("select_category"))
-        
-    subgroups = get_unique("v_gruppe", zavod=factory, storona=side)
+        session["factory"] = factory
+        session["side"] = side
+    else:
+        factory = session.get("factory")
+        side = session.get("side")
+        if not all([factory, side]):
+            return redirect(url_for("select_side"))
+
+    subgroup = request.form.get("subgroup")
+    if subgroup:
+        session["subgroup"] = subgroup
+        return redirect(url_for("select_category"))
+
+    subgroups = get_unique("В Группе", Завод=factory, Сторона=side)
     operator = session.get("user")
     selection_path = side
 
@@ -379,26 +258,25 @@ def select_subgroup():
 
 @app.route("/category", methods=["GET", "POST"])
 def select_category():
-    """
-    Third step: selecting the category based on previous selections.
-    """
     if request.method == "POST":
-        session["subgroup"] = request.form.get("subgroup", "").strip()
+        factory = request.form.get("factory", "").strip()
+        side = request.form.get("side", "").strip()
+        subgroup = request.form.get("subgroup", "").strip()
 
-    factory = session.get("factory")
-    side = session.get("side")
-    subgroup = session.get("subgroup")
+        # Save to session
+        session["factory"] = factory
+        session["side"] = side
+        session["subgroup"] = subgroup
+    else:
+        # GET request (back button), restore from session
+        factory = session.get("factory")
+        side = session.get("side")
+        subgroup = session.get("subgroup")
 
-    if not all([factory, side, subgroup]):
-        return redirect(url_for("select_subgroup"))
+        if not all([factory, side, subgroup]):
+            return redirect(url_for("select_subgroup"))
 
-    if request.method == "POST":
-        category = request.form.get("category")
-        if category:
-            session["category"] = category
-            return redirect(url_for("select_product"))
-
-    categories = get_unique("kategoriya", zavod=factory, storona=side, v_gruppe=subgroup)
+    categories = get_unique("Категория", Завод=factory, Сторона=side, **{"В Группе": subgroup})
     selection_path = f"{side} > {subgroup}"
     operator = session.get("user")
 
@@ -415,24 +293,44 @@ def select_category():
 
 @app.route("/product", methods=["GET", "POST"])
 def select_product():
-    """
-    Fourth step: selecting the product and entering quantities.
-    """
     if "user" not in session:
         return redirect(url_for("login"))
 
     if request.method == "POST":
-        session["category"] = request.form.get("category", "").strip()
+        # Read from form
+        factory = request.form.get("factory", "").strip()
+        side = request.form.get("side", "").strip()
+        subgroup = request.form.get("subgroup", "").strip()
+        category = request.form.get("category", "").strip()
 
-    factory = session.get("factory")
-    side = session.get("side")
-    subgroup = session.get("subgroup")
-    category = session.get("category")
+        if not category:
+            return "❌ Ошибка: категория не выбрана или не передана.", 400
 
-    if not all([factory, side, subgroup, category]):
-        return redirect(url_for("select_category"))
+        # Save to session so we can restore later
+        session["factory"] = factory
+        session["side"] = side
+        session["subgroup"] = subgroup
+        session["category"] = category
 
-    products = get_unique("naimenovanie", zavod=factory, storona=side, v_gruppe=subgroup, kategoriya=category)
+    else:
+        # Read from session during GET (back button)
+        factory = session.get("factory")
+        side = session.get("side")
+        subgroup = session.get("subgroup")
+        category = session.get("category")
+
+        # If any required field is missing, redirect user to reselect
+        if not all([factory, side, subgroup, category]):
+            return redirect(url_for("select_category"))
+
+    # This runs in both GET and POST
+    filtered_df = df[
+        (df["Завод"] == factory) &
+        (df["Сторона"] == side) &
+        (df["В Группе"] == subgroup) &
+        (df["Категория"] == category)
+    ]
+    products = filtered_df["Наименование"].dropna().unique().tolist()
     operator = session.get("user")
     selection_path = f"{side} > {subgroup} > {category}"
 
@@ -451,9 +349,6 @@ def select_product():
 
 @app.route("/submit", methods=["POST"])
 def submit():
-    """
-    Final step: gathers all form data and saves it to the database.
-    """
     side = request.form.get("side", "")
 
     data = {
@@ -462,7 +357,7 @@ def submit():
         "В Группе": request.form.get("subgroup", ""),
         "Категория": request.form.get("category", ""),
         "Наименование": request.form.get("product", ""),
-        "Количество": request.form.get("quantity") if side != "მშრალი/Сухая" else "",
+        "Количество": request.form.get("quantity") if side != "Сухая" else "",
         "Оператор": request.form.get("operator", ""),
         "Комментарий": request.form.get("comment", ""),
         "gp_padoni": request.form.get("gp_padoni") or 0,
@@ -492,11 +387,11 @@ def submit():
         )
         db.session.add(new_entry)
         db.session.commit()
-        app.logger.info(f"✅ Entry saved successfully: {data}")
+        app.logger.info(f"✅ Смена успешно сохранена: {data}")
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.error(f"❌ Error saving to database: {str(e)}", exc_info=True)
-        return "❌ Error saving data.", 500
+        app.logger.error(f"❌ Ошибка при сохранении в базу данных: {str(e)}", exc_info=True)
+        return "❌ Ошибка при сохранении данных.", 500
 
     operator = session.get("user")
     return render_template("submit.html", data=data, operator=operator)
@@ -508,11 +403,8 @@ def submit():
 
 @app.route("/restart")
 def restart():
-    """
-    Clears the session (except for the factory) to start a new data entry process.
-    """
     preserved_factory = session.get("factory")
-    for key in ["side", "subgroup", "category", "product"]:
+    for key in ["factory", "side", "subgroup", "category", "product"]:
         session.pop(key, None)
     if preserved_factory:
         session["factory"] = preserved_factory
@@ -524,18 +416,19 @@ def restart():
 
 @app.route("/export_admin_csv")
 def export_admin_csv():
-    """
-    Exports all records from the 'results' table to a CSV file. Admin only.
-    """
     if session.get("user") != "admin":
         return redirect(url_for("login"))
 
     try:
         results = Result.query.order_by(Result.created_at.desc()).all()
 
+        # Get artikul mapping
+        name_to_artikul = dict(zip(df["Наименование"], df["Артикул"]))
+
         si = io.StringIO()
         cw = csv.writer(si)
 
+        # Header
         cw.writerow([
             "ID", "Количество", "Готовая продукция (Падони)", "Готовая продукция (Ряди)",
             "Брак (Падони)", "Брак (Ряди)", "Уцененная (Падони)", "Уцененная (Ряди)",
@@ -547,17 +440,17 @@ def export_admin_csv():
             status = "Удалено" if r.delete_comment else "Активно"
             reason = r.delete_comment or ""
             artikul = name_to_artikul.get(r.naimenovanie, "")
-            kolichestvo = r.kolichestvo if r.storona != "მშრალი/Сухая" else ""
+            kolichestvo = r.kolichestvo if r.storona != "Сухая" else ""
 
             cw.writerow([
                 r.id,
                 kolichestvo,
-                r.gp_padoni if r.storona == "მშრალი/Сухая" else "",
-                r.gp_ryadi if r.storona == "მშრალი/Сухая" else "",
-                r.brak_padoni if r.storona == "მშრალი/Сухая" else "",
-                r.brak_ryadi if r.storona == "მშრალი/Сухая" else "",
-                r.uc_padoni if r.storona == "მშრალი/Сухая" else "",
-                r.uc_ryadi if r.storona == "მშრალი/Сухая" else "",
+                r.gp_padoni if r.storona == "Сухая" else "",
+                r.gp_ryadi if r.storona == "Сухая" else "",
+                r.brak_padoni if r.storona == "Сухая" else "",
+                r.brak_ryadi if r.storona == "Сухая" else "",
+                r.uc_padoni if r.storona == "Сухая" else "",
+                r.uc_ryadi if r.storona == "Сухая" else "",
                 r.naimenovanie or "",
                 artikul,
                 r.v_gruppe or "",
@@ -576,8 +469,8 @@ def export_admin_csv():
         return output
 
     except Exception as e:
-        app.logger.error("❌ Error exporting CSV:", exc_info=True)
-        return f"❌ Error exporting CSV: {str(e)}", 500
+        app.logger.error("❌ Ошибка при экспорте CSV:", exc_info=True)
+        return f"❌ Ошибка при экспорте CSV: {str(e)}", 500
 
 
 
@@ -587,9 +480,6 @@ def export_admin_csv():
 
 @app.route("/edit_result/<int:result_id>", methods=["GET", "POST"])
 def edit_result(result_id):
-    """
-    Allows an operator to edit their own records. Logs changes to EditHistory.
-    """
     result = Result.query.get_or_404(result_id)
     operator = session.get("user", "unknown")
 
@@ -597,7 +487,7 @@ def edit_result(result_id):
         changes = []
 
         editable_fields = ["kolichestvo", "comment"]
-        if result.storona == "მშრალი/Сухая":
+        if result.storona == "Сухая":
             editable_fields += ["gp_padoni", "gp_ryadi", "brak_padoni", "brak_ryadi", "uc_padoni", "uc_ryadi"]
 
         for field in editable_fields:
@@ -626,6 +516,7 @@ def edit_result(result_id):
 
         return redirect(url_for("operator_history"))
 
+    # ✅ Define field labels here:
     FIELD_LABELS = {
         "kolichestvo": "Количество",
         "comment": "Комментарий",
@@ -644,9 +535,6 @@ def edit_result(result_id):
 
 @app.route("/mark_deleted/<int:result_id>", methods=["POST"])
 def mark_deleted(result_id):
-    """
-    Soft-deletes a record by adding a deletion comment.
-    """
     result = Result.query.get_or_404(result_id)
 
     reason = request.form.get("reason", "").strip()

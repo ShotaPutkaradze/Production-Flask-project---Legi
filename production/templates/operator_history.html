@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ოპერატორის ისტორია / История оператора</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 50px 20px 20px;
+        box-sizing: border-box;
+      }
+
+      .header-controls {
+        width: 100%;
+        max-width: 1700px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .logout-link {
+        text-decoration: none;
+        color: #d32f2f;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .greeting {
+        color: #333;
+        font-size: 16px;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      #searchInput {
+        padding: 10px;
+        font-size: 16px;
+        width: 100%;
+        max-width: 400px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .action-btn {
+        text-decoration: none;
+        padding: 12px 20px;
+        color: black;
+        border-radius: 4px;
+        font-size: 16px;
+        text-align: center;
+        background-color: #28a745;
+        border: none;
+        cursor: pointer;
+      }
+      .action-btn:hover {
+        background-color: #218838;
+      }
+      .report-btn {
+        background-color: #2980b9;
+        color: white;
+      }
+      .report-btn:hover {
+        background-color: #1f6391;
+      }
+
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+        max-width: 1700px;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 1650px;
+        font-size: 14px;
+      }
+
+      table th,
+      table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        vertical-align: middle;
+        text-align: left;
+      }
+
+      table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      table tbody tr:hover:not(.edited-row):not(.deleted-row) {
+        background-color: #f3faff;
+      }
+
+      .pagination {
+        margin-top: 30px;
+        text-align: center;
+      }
+
+      .pagination a {
+        margin: 0 5px;
+        text-decoration: none;
+        color: #2980b9;
+      }
+
+      .pagination a.current {
+        font-weight: bold;
+        color: #d32f2f;
+      }
+
+      .deleted-row td {
+        color: #999;
+        text-decoration: line-through;
+        background-color: #f8f8f8;
+      }
+
+      .edited-row {
+        background-color: #fff6cc;
+      }
+
+      .edit-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      .edit-button,
+      .toggle-edit-btn {
+        background: #ccc;
+        border: none;
+        padding: 6px 10px;
+        font-size: 18px;
+        border-radius: 4px;
+        cursor: pointer;
+        line-height: 1;
+        text-decoration: none;
+        color: black;
+      }
+
+      .edit-button:hover,
+      .toggle-edit-btn:hover {
+        background: #bbb;
+      }
+
+      .toggle-edit-btn.has-edits {
+        font-weight: bold;
+        background-color: #ffeb99;
+      }
+
+      .edit-button[disabled] {
+        background-color: #e0e0e0;
+        color: #888;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .edit-log ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #333;
+        font-size: 13px;
+      }
+
+      .edit-log li {
+        margin-bottom: 5px;
+      }
+
+      .delete-comment-block {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .delete-reason {
+        font-size: 12px;
+        color: #a94442;
+        font-style: italic;
+        margin-bottom: 4px;
+      }
+
+      .delete-info {
+        color: red;
+        font-weight: bold;
+      }
+
+      .delete-form input[type="text"] {
+        width: 100%;
+        padding: 4px;
+        font-size: 13px;
+        box-sizing: border-box;
+      }
+
+      .delete-form button {
+        font-size: 12px;
+        padding: 4px 10px;
+        cursor: pointer;
+        margin-top: 4px;
+        width: 100%;
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+      .modal-buttons {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+      .modal-buttons button {
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+      }
+      .modal-confirm-btn {
+        background-color: #d9534f;
+        color: white;
+      }
+      .modal-cancel-btn {
+        background-color: #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header-controls">
+      <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+      <p class="greeting">
+        <strong>
+          გამარჯობა {{ operator }} 🙂 / Здравствуйте {{ operator }} 🙂</strong
+        >
+      </p>
+      <h1>ჩანაწერების ისტორია / История записей</h1>
+      <div class="button-group">
+        <a href="{{ url_for('restart') }}" class="action-btn"
+          >➕ პროდუქციის დამატება / ➕ Добавить продукцию</a
+        >
+        <a href="{{ url_for('report') }}" class="action-btn report-btn"
+          >რეპორტი / Отчет</a
+        >
+      </div>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="🔍 ძიება... / 🔍 Поиск..."
+      />
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>რაოდენობა<br />Количество</th>
+            <th>მზა (პადონი/რიგი)<br />Готовая (Пад/Ряд)</th>
+            <th>წუნი (პადონი/რიგი)<br />Брак (Пад/Ряд)</th>
+            <th>ჩამოფასებული (პადონი/რიგი)<br />Уцененная (Пад/Ряд)</th>
+            <th>დასახელება<br />Наименование</th>
+            <th>არტიკული<br />Артикул</th>
+            <th>ჯგუფი<br />Группа</th>
+            <th>კატეგორია<br />Категория</th>
+            <th>მხარე<br />Сторона</th>
+            <th>ოპერატორი<br />Оператор</th>
+            <th>თარიღი/დრო<br />Дата/Время</th>
+            <th>კომენტარი<br />Комментарий</th>
+            <th>მოქმედებები<br />Действия</th>
+            <th>წაშლა<br />Удаление</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          <tr
+            class="{% if r.delete_comment %}deleted-row{% elif r.edit_logs %}edited-row{% endif %}"
+          >
+            <td>{{ r.id }}</td>
+            <td>
+              {% if r.storona != "მშრალი/Сухая" %} {{ r.kolichestvo }} {% else
+              %} – {% endif %}
+            </td>
+            <td>
+              {% if r.gp_padoni or r.gp_ryadi %}{{ r.gp_padoni or 0 }}/{{
+              r.gp_ryadi or 0 }}{% else %}–{% endif %}
+            </td>
+            <td>
+              {% if r.brak_padoni or r.brak_ryadi %}{{ r.brak_padoni or 0 }}/{{
+              r.brak_ryadi or 0 }}{% else %}–{% endif %}
+            </td>
+            <td>
+              {% if r.uc_padoni or r.uc_ryadi %}{{ r.uc_padoni or 0 }}/{{
+              r.uc_ryadi or 0 }}{% else %}–{% endif %}
+            </td>
+            <td>{{ r.naimenovanie }}</td>
+            <td>{{ r.artikul }}</td>
+            <td>{{ r.v_gruppe }}</td>
+            <td>{{ r.kategoriya }}</td>
+            <td>{{ r.storona }}</td>
+            <td>{{ r.operator }}</td>
+            <td>
+              {{ r.created_at.strftime('%d.%m.%Y %H:%M:%S') if r.created_at else
+              '' }}
+            </td>
+            <td>{{ r.comment }}</td>
+            <td>
+              <div class="edit-buttons">
+                {% if r.delete_comment %}
+                <button
+                  class="edit-button"
+                  disabled
+                  title="ჩანაწერი წაშლილია / Запись удалена"
+                >
+                  ✏️
+                </button>
+                {% else %}
+                <a
+                  href="{{ url_for('edit_result', result_id=r.id) }}"
+                  class="edit-button"
+                  title="რედაქტირება / Редактировать"
+                  >✏️</a
+                >
+                {% endif %}
+                <button
+                  class="toggle-edit-btn {% if r.edit_logs %}has-edits{% endif %}"
+                  onclick="toggleEditHistory('{{ r.id }}')"
+                  title="ისტორია / История"
+                >
+                  📜
+                </button>
+              </div>
+            </td>
+            <td>
+              {% if r.delete_comment %}
+              <div class="delete-comment-block">
+                <div class="delete-reason">{{ r.delete_comment }}</div>
+                <span class="delete-info">წაშლილია / Удалено</span>
+              </div>
+              {% elif session['user'] == 'admin' or session['user'] ==
+              r.operator %}
+              <form
+                method="POST"
+                action="{{ url_for('mark_deleted', result_id=r.id) }}"
+                class="delete-form"
+                onsubmit="return validateDelete(event, this);"
+              >
+                <input
+                  type="text"
+                  name="reason"
+                  placeholder="წაშლის მიზეზი / Причина удаления"
+                />
+                <button type="submit">🗑️</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          <tr id="edit-log-{{ r.id }}" class="edit-log" style="display: none">
+            <td colspan="15">
+              {% if r.edit_logs %}
+              <ul>
+                {% for log in r.edit_logs %}
+                <li>
+                  <strong
+                    >{{ FIELD_LABELS.get(log.field_name, log.field_name)
+                    }}</strong
+                  >: <s>{{ log.old_value }}</s> → <b>{{ log.new_value }}</b> ({{
+                  log.edited_by }} • {{ log.edited_at.strftime('%d.%m.%Y %H:%M')
+                  }})
+                </li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <em>ცვლილებები არ არის / Нет изменений</em>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+      {% for page_num in range(1, pagination.pages + 1) %} {% if page_num ==
+      pagination.page %}
+      <a href="?page={{ page_num }}" class="current">{{ page_num }}</a>
+      {% else %}
+      <a href="?page={{ page_num }}">{{ page_num }}</a>
+      {% endif %} {% endfor %}
+    </div>
+    {% endif %}
+
+    <div id="custom-modal" class="modal-overlay">
+      <div class="modal-content">
+        <p id="modal-message"></p>
+        <div id="modal-buttons" class="modal-buttons"></div>
+      </div>
+    </div>
+
+    <script>
+      const searchInput = document.getElementById("searchInput");
+      searchInput.addEventListener("keyup", function () {
+        const filter = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll(
+          "tbody tr.edit-log, tbody tr:not(.edit-log)"
+        );
+
+        for (let i = 0; i < rows.length; i += 2) {
+          const dataRow = rows[i];
+          const logRow = rows[i + 1];
+          const text = dataRow.innerText.toLowerCase();
+          const shouldShow = text.includes(filter);
+          dataRow.style.display = shouldShow ? "" : "none";
+          if (!shouldShow) {
+            logRow.style.display = "none";
+          }
+        }
+      });
+
+      function toggleEditHistory(id) {
+        const el = document.getElementById("edit-log-" + id);
+        el.style.display = el.style.display === "none" ? "table-row" : "none";
+      }
+
+      // --- Custom Modal Logic ---
+      const modal = document.getElementById("custom-modal");
+      const modalMessage = document.getElementById("modal-message");
+      const modalButtons = document.getElementById("modal-buttons");
+
+      function showAlert(message) {
+        modalMessage.innerText = message;
+        modalButtons.innerHTML = '<button class="modal-cancel-btn">OK</button>';
+        modal.style.display = "flex";
+
+        modalButtons.querySelector("button").onclick = () => {
+          modal.style.display = "none";
+        };
+      }
+
+      function showConfirm(message) {
+        return new Promise((resolve) => {
+          modalMessage.innerText = message;
+          modalButtons.innerHTML = `
+            <button id="confirm-btn" class="modal-confirm-btn">დადასტურება / Подтвердить</button>
+            <button id="cancel-btn" class="modal-cancel-btn">გაუქმება / Отмена</button>
+          `;
+          modal.style.display = "flex";
+
+          document.getElementById("confirm-btn").onclick = () => {
+            modal.style.display = "none";
+            resolve(true);
+          };
+
+          document.getElementById("cancel-btn").onclick = () => {
+            modal.style.display = "none";
+            resolve(false);
+          };
+        });
+      }
+
+      async function validateDelete(event, form) {
+        event.preventDefault(); // Prevent form from submitting immediately
+        const reason = form.querySelector('input[name="reason"]').value.trim();
+
+        if (!reason) {
+          showAlert(
+            "გთხოვთ, მიუთითოთ წაშლის მიზეზი. / Пожалуйста, укажите причину удаления."
+          );
+          return false;
+        }
+
+        const confirmed = await showConfirm(
+          "დარწმუნებული ხართ, რომ გსურთ ჩანაწერის მონიშვნა წაშლილად? / Вы уверены, что хотите пометить запись как удалённую?"
+        );
+
+        if (confirmed) {
+          form.submit(); // Proceed with form submission
+        }
+        return false; // Prevent default submission regardless
+      }
+    </script>
+  </body>
+</html>

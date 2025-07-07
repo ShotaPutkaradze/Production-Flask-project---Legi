@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#28a745" />
+    <title>მონაცემები შენახულია / Данные сохранены</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background-color: #f9f9f9;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 50px 16px 20px;
+        box-sizing: border-box;
+        min-height: 100vh;
+      }
+      .content-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        padding: 40px;
+        background-color: #ffffff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 700px;
+        margin: 20px auto 40px;
+        text-align: center;
+      }
+      .logout-link {
+        text-decoration: none;
+        color: #d32f2f;
+        font-weight: bold;
+        font-size: 16px;
+      }
+      .greeting {
+        font-size: 16px;
+        color: #333;
+      }
+      h1 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        font-size: 24px;
+        color: #28a745;
+      }
+      .data-table {
+        border-collapse: collapse;
+        font-size: 16px;
+        width: 100%;
+        max-width: 600px;
+        margin-top: 20px;
+      }
+      .data-table td {
+        padding: 10px 16px;
+        border-bottom: 1px solid #eee;
+      }
+      .data-table tr:last-child td {
+        border-bottom: none;
+      }
+      .data-table .label {
+        font-weight: bold;
+        text-align: right;
+        color: #333;
+        width: 45%;
+      }
+      .data-table .value {
+        text-align: left;
+        color: #555;
+        width: 55%;
+        word-break: break-word;
+      }
+      .button-group {
+        display: flex;
+        flex-direction: column; /* Changed to column */
+        gap: 15px;
+        align-items: center; /* Center buttons */
+        width: 100%;
+        margin-top: 30px;
+      }
+      .button-group a {
+        width: 100%; /* Make buttons take full width of container */
+        max-width: 600px;
+        text-decoration: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 16px;
+        text-align: center;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        box-sizing: border-box;
+      }
+      .restart-btn,
+      .history-btn {
+        background-color: #28a745;
+        color: black;
+      }
+      .restart-btn:hover,
+      .history-btn:hover {
+        background-color: #218838;
+      }
+
+      @media (max-width: 600px) {
+        .content-box {
+          padding: 24px 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="content-box">
+      <a class="logout-link" href="{{ url_for('logout') }}">გასვლა / Выйти</a>
+      <p class="greeting">
+        <strong
+          >გამარჯობა {{ operator }} 🙂 / Здравствуйте {{ operator }} 🙂</strong
+        >
+      </p>
+    </div>
+
+    <div class="content-box">
+      <h1>✅ შენახულია / Сохранено</h1>
+
+      <table class="data-table">
+        <tr>
+          <td class="label">ქარხანა: / Завод:</td>
+          <td class="value">{{ data["Завод"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">მხარე: / Сторона:</td>
+          <td class="value">{{ data["Сторона"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">ჯგუფი: / Группа:</td>
+          <td class="value">{{ data["В Группе"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">კატეგორია: / Категория:</td>
+          <td class="value">{{ data["Категория"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">დასახელება: / Наименование:</td>
+          <td class="value">{{ data["Наименование"] }}</td>
+        </tr>
+
+        {% if data["Сторона"] != "მშრალი/Сухая" %}
+        <tr>
+          <td class="label">რაოდენობა: / Количество:</td>
+          <td class="value">{{ data["Количество"] }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td class="label">მზა პროდუქცია: / Готовая продукция:</td>
+          <td class="value">
+            პადონი: / Падони: {{ data["gp_padoni"] }}<br />რიგი: / Ряди: {{
+            data["gp_ryadi"] }}
+          </td>
+        </tr>
+        <tr>
+          <td class="label">წუნი: / Брак:</td>
+          <td class="value">
+            პადონი: / Падони: {{ data["brak_padoni"] }}<br />რიგი: / Ряди: {{
+            data["brak_ryadi"] }}
+          </td>
+        </tr>
+        <tr>
+          <td class="label">ჩამოფასებული: / Уцененная:</td>
+          <td class="value">
+            პადონი: / Падони: {{ data["uc_padoni"] }}<br />რიგი: / Ряди: {{
+            data["uc_ryadi"] }}
+          </td>
+        </tr>
+        {% endif %}
+
+        <tr>
+          <td class="label">ოპერატორი: / Оператор:</td>
+          <td class="value">{{ data["Оператор"] }}</td>
+        </tr>
+        <tr>
+          <td class="label">კომენტარი: / Комментарий:</td>
+          <td class="value">{{ data["Комментарий"] }}</td>
+        </tr>
+      </table>
+
+      <div class="button-group">
+        <a href="{{ url_for('restart') }}" class="restart-btn"
+          >🔁 თავიდან დამატება / Ещё добавить</a
+        >
+        <a href="{{ url_for('operator_history') }}" class="history-btn"
+          >📋 ისტორიის ნახვა / Посмотреть историю</a
+        >
+      </div>
+    </div>
+  </body>
+</html>
